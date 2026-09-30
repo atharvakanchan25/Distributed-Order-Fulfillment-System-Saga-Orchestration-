@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5437/saga_db   # overridden by @DynamicPropertySource
+    username: saga_user
+    password: saga_pass
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  kafka:
+    bootstrap-servers: localhost:9092              # overridden by @DynamicPropertySource
+
+logging:
+  level:
+    com.fulfillment: DEBUG

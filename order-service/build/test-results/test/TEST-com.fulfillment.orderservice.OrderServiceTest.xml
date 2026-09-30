@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.fulfillment.orderservice.OrderServiceTest" tests="10" skipped="0" failures="1" errors="0" timestamp="2026-09-30T05:49:08" hostname="DESKTOP-LJG4KIF" time="1.449">
+  <properties/>
+  <testcase name="order_confirmedToConfirmed_rejected()" classname="com.fulfillment.orderservice.OrderServiceTest" time="1.315"/>
+  <testcase name="cancelOrder_whenPending_transitionsToFailed()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.021"/>
+  <testcase name="getOrder_notFound_throwsOrderNotFoundException()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.009"/>
+  <testcase name="cancelOrder_whenConfirmed_throwsIllegalState()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.008"/>
+  <testcase name="order_confirmedToPending_rejected()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.004"/>
+  <testcase name="createOrder_savesPendingAndWritesOutbox()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.033"/>
+  <testcase name="order_pendingToConfirmed_allowed()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.005"/>
+  <testcase name="order_pendingToFailed_allowed()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.002"/>
+  <testcase name="createOrder_idempotentReplay_returnsExistingOrder()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.027">
+    <failure message="org.mockito.exceptions.misusing.UnnecessaryStubbingException: &#10;Unnecessary stubbings detected.&#10;Clean &amp; maintainable test code requires zero unnecessary code.&#10;Following stubbings are unnecessary (click to navigate to relevant line of code):&#10;  1. -&gt; at com.fulfillment.orderservice.OrderServiceTest.createOrder_idempotentReplay_returnsExistingOrder(OrderServiceTest.java:56)&#10;Please remove unnecessary stubbings or use 'lenient' strictness. More info: javadoc for UnnecessaryStubbingException class." type="org.mockito.exceptions.misusing.UnnecessaryStubbingException">org.mockito.exceptions.misusing.UnnecessaryStubbingException: 
+Unnecessary stubbings detected.
+Clean &amp; maintainable test code requires zero unnecessary code.
+Following stubbings are unnecessary (click to navigate to relevant line of code):
+  1. -&gt; at com.fulfillment.orderservice.OrderServiceTest.createOrder_idempotentReplay_returnsExistingOrder(OrderServiceTest.java:56)
+Please remove unnecessary stubbings or use 'lenient' strictness. More info: javadoc for UnnecessaryStubbingException class.
+	at app//org.mockito.junit.jupiter.MockitoExtension.afterEach(MockitoExtension.java:192)
+	at java.base@21.0.5/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base@21.0.5/java.util.ArrayList.forEach(ArrayList.java:1596)
+</failure>
+  </testcase>
+  <testcase name="order_failedToConfirmed_rejected()" classname="com.fulfillment.orderservice.OrderServiceTest" time="0.003"/>
+  <system-out><![CDATA[11:19:09.784 [Test worker] INFO com.fulfillment.orderservice.domain.OrderService -- [order] Order 700a0c6c-6f2e-4b0e-996b-1907fd67ae1e created, outbox entry written
+11:19:09.820 [Test worker] INFO com.fulfillment.orderservice.domain.OrderService -- [order] Idempotent replay for key=56aeb317-ed99-48d9-bdaf-650354980abd
+]]></system-out>
+  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (C:\Users\Atharva Kanchan\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.14.13\979ce25f7d3096a2e82214ba7dc972a05ce7a171\byte-buddy-agent-1.14.13.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

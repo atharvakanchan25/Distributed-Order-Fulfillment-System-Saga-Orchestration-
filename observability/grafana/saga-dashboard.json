@@ -1,0 +1,85 @@
+{
+  "title": "Order Fulfillment Saga",
+  "uid": "saga-overview",
+  "schemaVersion": 38,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Saga State Counts",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 4 },
+      "targets": [
+        {
+          "expr": "saga_state_count",
+          "legendFormat": "{{state}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Compensation Rate (per minute)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(saga_compensations_total[1m])",
+          "legendFormat": "compensations/s"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "DLQ Events (per minute)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(saga_dlq_total[1m])",
+          "legendFormat": "dlq/s"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "HTTP p99 Latency — POST /orders",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{uri='/orders',method='POST'}[1m])) by (le))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket{uri='/orders',method='POST'}[1m])) by (le))",
+          "legendFormat": "p50"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Outbox Pending (unpublished rows)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "outbox_pending_count",
+          "legendFormat": "{{service}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Kafka Consumer Lag",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "kafka_consumer_fetch_manager_records_lag{group=~'.*-group'}",
+          "legendFormat": "{{group}} {{topic}}"
+        }
+      ]
+    }
+  ]
+}

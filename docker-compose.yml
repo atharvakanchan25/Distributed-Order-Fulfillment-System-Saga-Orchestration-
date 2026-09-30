@@ -1,0 +1,309 @@
+version: '3.9'
+
+services:
+
+  # ── Databases (one container per service) ──────────────────────────────────
+
+  postgres-order:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: order_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-order:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order_user -d order_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-inventory:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: inventory_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-inventory:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventory_user -d inventory_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-payment:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_USER: payment_user
+      POSTGRES_PASSWORD: payment_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-payment:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment_user -d payment_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-shipping:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: shipping_db
+      POSTGRES_USER: shipping_user
+      POSTGRES_PASSWORD: shipping_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata-shipping:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shipping_user -d shipping_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-notification:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: notification_user
+      POSTGRES_PASSWORD: notification_pass
+    ports:
+      - "5436:5432"
+    volumes:
+      - pgdata-notification:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification_user -d notification_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-saga:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: saga_db
+      POSTGRES_USER: saga_user
+      POSTGRES_PASSWORD: saga_pass
+    ports:
+      - "5437:5432"
+    volumes:
+      - pgdata-saga:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saga_user -d saga_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Kafka + Zookeeper ──────────────────────────────────────────────────────
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Application Services ───────────────────────────────────────────────────
+
+  order-service:
+    build:
+      context: ./order-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres-order
+      DB_PORT: 5432
+      DB_USER: order_user
+      DB_PASS: order_pass
+      KAFKA_BOOTSTRAP: kafka:29092
+      OTEL_ENDPOINT: http://otel-collector:4317
+      JWT_SECRET: shared-secret-min-32-chars-change-me
+    depends_on:
+      postgres-order:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  inventory-service:
+    build:
+      context: ./inventory-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: postgres-inventory
+      DB_PORT: 5432
+      DB_USER: inventory_user
+      DB_PASS: inventory_pass
+      KAFKA_BOOTSTRAP: kafka:29092
+      OTEL_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      postgres-inventory:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  payment-service:
+    build:
+      context: ./payment-service
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: postgres-payment
+      DB_PORT: 5432
+      DB_USER: payment_user
+      DB_PASS: payment_pass
+      KAFKA_BOOTSTRAP: kafka:29092
+      OTEL_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  shipping-service:
+    build:
+      context: ./shipping-service
+    ports:
+      - "8084:8084"
+    environment:
+      DB_HOST: postgres-shipping
+      DB_PORT: 5432
+      DB_USER: shipping_user
+      DB_PASS: shipping_pass
+      KAFKA_BOOTSTRAP: kafka:29092
+      OTEL_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      postgres-shipping:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: ./notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      DB_HOST: postgres-notification
+      DB_PORT: 5432
+      DB_USER: notification_user
+      DB_PASS: notification_pass
+      KAFKA_BOOTSTRAP: kafka:29092
+      OTEL_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      postgres-notification:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  saga-orchestrator:
+    build:
+      context: ./saga-orchestrator
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres-saga
+      DB_PORT: 5432
+      DB_USER: saga_user
+      DB_PASS: saga_pass
+      KAFKA_BOOTSTRAP: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      OTEL_ENDPOINT: http://otel-collector:4317
+      JWT_SECRET: shared-secret-min-32-chars-change-me
+    depends_on:
+      postgres-saga:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Observability stack ───────────────────────────────────────────────────
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.99.0
+    command: ["--config=/etc/otel/otel-collector.yml"]
+    volumes:
+      - ./observability/otel-collector.yml:/etc/otel/otel-collector.yml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "14250:14250"   # gRPC from OTel collector
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    volumes:
+      - ./observability/grafana/saga-dashboard.json:/var/lib/grafana/dashboards/saga-dashboard.json
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+volumes:
+  pgdata-order:
+  pgdata-inventory:
+  pgdata-payment:
+  pgdata-shipping:
+  pgdata-notification:
+  pgdata-saga:

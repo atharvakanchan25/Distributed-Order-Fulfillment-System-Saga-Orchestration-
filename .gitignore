@@ -1,0 +1,9 @@
+.gradle/
+build/
+*.class
+*.jar
+*.war
+*.zip
+gradle-dist/
+gradle-8.7-bin.zip
+test-info.log

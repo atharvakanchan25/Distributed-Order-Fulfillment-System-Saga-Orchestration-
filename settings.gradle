@@ -1,0 +1,9 @@
+rootProject.name = 'order-fulfillment-system'
+
+include 'common'
+include 'order-service'
+include 'inventory-service'
+include 'payment-service'
+include 'shipping-service'
+include 'notification-service'
+include 'saga-orchestrator'
